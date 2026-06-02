@@ -4,7 +4,7 @@ import FormData from 'form-data';
 import fetch from 'node-fetch';
 
 const SPREADSHEET_ID = '1XaPyj6djYszXIrz2rFTDLCSimEYqpF4zUBQnKzwCko4';
-const IMGBB_API_KEY = process.env.IMGBB_API_KEY || '3a9d6f2b8c1e5a7d4b2f9e8c6a3d1f7b';
+const IMGBB_API_KEY = process.env.IMGBB_API_KEY || 'ca4bae83ebeca95e9fed1cb76865e528';
 
 const credentials = {
   type: 'service_account',
