@@ -1,8 +1,10 @@
 import { GoogleAuth } from 'google-auth-library';
 import { google } from 'googleapis';
-import { Readable } from 'stream';
+import FormData from 'form-data';
+import fetch from 'node-fetch';
 
 const SPREADSHEET_ID = '1XaPyj6djYszXIrz2rFTDLCSimEYqpF4zUBQnKzwCko4';
+const IMGBB_API_KEY = process.env.IMGBB_API_KEY || '3a9d6f2b8c1e5a7d4b2f9e8c6a3d1f7b';
 
 const credentials = {
   type: 'service_account',
@@ -24,52 +26,25 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { readerCode, fullName, email, bookId, bookTitle, imageBase64, imageMime } = req.body;
+    const { readerCode, fullName, email, bookId, bookTitle, imageBase64 } = req.body;
 
-    const auth = new GoogleAuth({ credentials, scopes: [
-      'https://www.googleapis.com/auth/spreadsheets',
-      'https://www.googleapis.com/auth/drive'
-    ]});
+    // Upload image to imgbb
+    const form = new FormData();
+    form.append('key', IMGBB_API_KEY);
+    form.append('image', imageBase64);
+    form.append('name', `${readerCode}_${bookId}_${Date.now()}`);
 
-    const drive = google.drive({ version: 'v3', auth });
+    const imgRes = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: form });
+    const imgData = await imgRes.json();
+
+    if (!imgData.success) throw new Error('Image upload failed: ' + JSON.stringify(imgData));
+
+    const screenshotLink = imgData.data.url;
+
+    // Write to Google Sheets
+    const auth = new GoogleAuth({ credentials, scopes: ['https://www.googleapis.com/auth/spreadsheets'] });
     const sheets = google.sheets({ version: 'v4', auth });
 
-    // Upload image to Drive folder "SCREENSHOTS"
-    const buffer = Buffer.from(imageBase64, 'base64');
-    const stream = Readable.from(buffer);
-    const filename = `${readerCode}_${bookId}_${Date.now()}.jpg`;
-
-    // Find or create SCREENSHOTS folder
-    let folderId;
-    const folderSearch = await drive.files.list({
-      q: "name='SCREENSHOTS' and mimeType='application/vnd.google-apps.folder' and trashed=false",
-      fields: 'files(id)'
-    });
-    if (folderSearch.data.files.length > 0) {
-      folderId = folderSearch.data.files[0].id;
-    } else {
-      const folder = await drive.files.create({
-        requestBody: { name: 'SCREENSHOTS', mimeType: 'application/vnd.google-apps.folder' },
-        fields: 'id'
-      });
-      folderId = folder.data.id;
-    }
-
-    const uploaded = await drive.files.create({
-      requestBody: { name: filename, parents: [folderId] },
-      media: { mimeType: imageMime || 'image/jpeg', body: stream },
-      fields: 'id, webViewLink'
-    });
-
-    // Make file publicly viewable
-    await drive.permissions.create({
-      fileId: uploaded.data.id,
-      requestBody: { role: 'reader', type: 'anyone' }
-    });
-
-    const screenshotLink = `https://drive.google.com/uc?id=${uploaded.data.id}`;
-
-    // Generate assignment ID
     const assId = `ASS-${Date.now()}`;
     const today = new Date().toISOString().split('T')[0];
 
