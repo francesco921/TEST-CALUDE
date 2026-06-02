@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Beta Reader Onboarding</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f7;min-height:100vh;color:#1d1d1f}
+.wrap{max-width:480px;margin:0 auto;padding:24px 20px 48px}
+.logo{text-align:center;margin-bottom:32px}
+.logo h1{font-size:22px;font-weight:600;color:#1d1d1f}
+.logo p{font-size:14px;color:#6e6e73;margin-top:6px}
+.card{background:#fff;border-radius:16px;padding:24px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+.field{margin-bottom:20px}
+.field:last-child{margin-bottom:0}
+label{display:block;font-size:13px;font-weight:500;color:#6e6e73;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.4px}
+input[type=text],input[type=email]{width:100%;padding:14px 16px;border:1.5px solid #e5e5ea;border-radius:12px;font-size:16px;color:#1d1d1f;background:#fff;outline:none;transition:border-color 0.2s}
+input:focus{border-color:#0071e3}
+.radio-group{display:flex;gap:10px}
+.radio-opt{flex:1;position:relative}
+.radio-opt input{position:absolute;opacity:0;width:0;height:0}
+.radio-opt label{display:flex;align-items:center;justify-content:center;padding:14px;border:1.5px solid #e5e5ea;border-radius:12px;font-size:15px;font-weight:500;color:#1d1d1f;cursor:pointer;transition:all 0.15s;text-transform:none;letter-spacing:0}
+.radio-opt input:checked + label{border-color:#0071e3;background:#f0f7ff;color:#0071e3}
+.btn{width:100%;padding:16px;background:#0071e3;color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:600;cursor:pointer;transition:opacity 0.15s;margin-top:8px}
+.btn:active{opacity:0.8}
+.btn:disabled{background:#c7c7cc;cursor:not-allowed}
+.hidden{display:none}
+.success{text-align:center;padding:40px 20px}
+.code-box{background:#f0f7ff;border:2px dashed #0071e3;border-radius:16px;padding:24px;margin:24px 0}
+.code{font-size:36px;font-weight:700;color:#0071e3;letter-spacing:4px;font-family:monospace}
+.code-label{font-size:13px;color:#6e6e73;margin-bottom:8px}
+.not-eligible{background:#fff5f5;border:2px solid #ff3b30;border-radius:16px;padding:20px;text-align:center;margin:16px 0}
+.not-eligible p{color:#ff3b30;font-weight:500}
+.step{font-size:12px;color:#6e6e73;text-align:center;margin-bottom:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">
+    <h1>Beta Reader Program</h1>
+    <p>Complete the form to join our program</p>
+  </div>
+
+  <div id="form-section">
+    <div class="step">Step 1 of 1 — Takes about 2 minutes</div>
+
+    <div class="card">
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="fullName" placeholder="Your full name" autocomplete="name">
+      </div>
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="email" placeholder="your@email.com" autocomplete="email">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="field">
+        <label>Do you have a PayPal account?</label>
+        <div class="radio-group">
+          <div class="radio-opt">
+            <input type="radio" name="hasPaypal" id="pp-yes" value="yes" onchange="togglePaypal()">
+            <label for="pp-yes">Yes</label>
+          </div>
+          <div class="radio-opt">
+            <input type="radio" name="hasPaypal" id="pp-no" value="no" onchange="togglePaypal()">
+            <label for="pp-no">No</label>
+          </div>
+        </div>
+      </div>
+      <div class="field hidden" id="paypal-field">
+        <label>PayPal Email</label>
+        <input type="email" id="paypalEmail" placeholder="paypal@email.com">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="field">
+        <label>Do you have an active Amazon account?</label>
+        <div class="radio-group">
+          <div class="radio-opt">
+            <input type="radio" name="hasAmazon" id="am-yes" value="yes">
+            <label for="am-yes">Yes</label>
+          </div>
+          <div class="radio-opt">
+            <input type="radio" name="hasAmazon" id="am-no" value="no">
+            <label for="am-no">No</label>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Have you spent at least $50 on Amazon?</label>
+        <div class="radio-group">
+          <div class="radio-opt">
+            <input type="radio" name="amazonFifty" id="af-yes" value="yes">
+            <label for="af-yes">Yes</label>
+          </div>
+          <div class="radio-opt">
+            <input type="radio" name="amazonFifty" id="af-no" value="no">
+            <label for="af-no">No</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn" onclick="submitForm()" id="submit-btn">Join the Program</button>
+  </div>
+
+  <div id="success-section" class="hidden success">
+    <div style="font-size:48px;margin-bottom:16px">🎉</div>
+    <h2 style="font-size:22px;font-weight:600;margin-bottom:8px">You're in!</h2>
+    <p style="color:#6e6e73;font-size:15px">Save your Reader Code — you'll need it to submit reviews.</p>
+    <div class="code-box">
+      <div class="code-label">Your Reader Code</div>
+      <div class="code" id="reader-code">BR-00000</div>
+    </div>
+    <p style="font-size:13px;color:#6e6e73">Screenshot this page or write it down. We'll send you your first book soon!</p>
+  </div>
+
+  <div id="reject-section" class="hidden success">
+    <div style="font-size:48px;margin-bottom:16px">😔</div>
+    <h2 style="font-size:22px;font-weight:600;margin-bottom:8px">Not eligible yet</h2>
+    <div class="not-eligible">
+      <p>You need an active Amazon account with at least $50 in purchases and a PayPal account to join our program.</p>
+    </div>
+    <p style="font-size:13px;color:#6e6e73">Once you meet the requirements, feel free to apply again.</p>
+  </div>
+</div>
+
+<script>
+function togglePaypal() {
+  const val = document.querySelector('input[name="hasPaypal"]:checked')?.value;
+  document.getElementById('paypal-field').classList.toggle('hidden', val !== 'yes');
+}
+
+async function submitForm() {
+  const fullName = document.getElementById('fullName').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const hasPaypal = document.querySelector('input[name="hasPaypal"]:checked')?.value;
+  const paypalEmail = document.getElementById('paypalEmail').value.trim();
+  const hasAmazon = document.querySelector('input[name="hasAmazon"]:checked')?.value;
+  const amazonFifty = document.querySelector('input[name="amazonFifty"]:checked')?.value;
+
+  if (!fullName || !email || !hasPaypal || !hasAmazon || !amazonFifty) {
+    alert('Please fill in all fields.');
+    return;
+  }
+  if (hasPaypal === 'yes' && !paypalEmail) {
+    alert('Please enter your PayPal email.');
+    return;
+  }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+
+  try {
+    const res = await fetch('/api/onboard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fullName, email, hasPaypal, paypalEmail, hasAmazon, amazonFifty })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      document.getElementById('form-section').classList.add('hidden');
+      if (data.eligible === 'ELIGIBLE') {
+        document.getElementById('reader-code').textContent = data.code;
+        document.getElementById('success-section').classList.remove('hidden');
+      } else {
+        document.getElementById('reject-section').classList.remove('hidden');
+      }
+    } else {
+      alert('Error: ' + data.error);
+      btn.disabled = false;
+      btn.textContent = 'Join the Program';
+    }
+  } catch(e) {
+    alert('Connection error. Please try again.');
+    btn.disabled = false;
+    btn.textContent = 'Join the Program';
+  }
+}
+</script>
+</body>
+</html>
