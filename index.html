@@ -95,6 +95,17 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 .refresh-btn{background:transparent;border:1px solid var(--border);color:var(--text2);padding:8px 16px;font-family:'DM Mono',monospace;font-size:12px;border-radius:6px;cursor:pointer;transition:all 0.15s}
 .refresh-btn:hover{border-color:var(--border2);color:var(--text)}
 .config-banner{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;padding:14px 20px;margin-bottom:24px;font-size:13px;color:var(--amber);display:none}
+.payout-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:12px;display:flex;align-items:center;gap:20px;transition:border-color 0.15s}
+.payout-card:hover{border-color:var(--border2)}
+.payout-card.paid{border-left:3px solid var(--green);opacity:0.6}
+.payout-name{font-size:15px;font-weight:500;flex:1}
+.payout-paypal{font-size:12px;color:var(--text3);margin-top:4px}
+.payout-amount{font-size:22px;font-weight:500;color:var(--green);min-width:80px;text-align:right}
+.payout-amount.paid{color:var(--text3);text-decoration:line-through}
+.paid-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;padding:8px 16px;border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text2);background:transparent;font-family:'DM Mono',monospace;transition:all 0.15s;white-space:nowrap}
+.paid-toggle:hover{border-color:var(--border2);color:var(--text)}
+.paid-toggle.checked{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.payout-books{font-size:11px;color:var(--text3);margin-top:6px}
 </style>
 </head>
 <body>
@@ -141,6 +152,11 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
       <div class="total-label">Totale da pagare</div>
     </div>
     <div class="total-amount" id="total-amount">$0.00</div>
+  </div>
+
+  <div id="payout-section" style="display:none;margin-top:32px">
+    <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px">Payout per reader</div>
+    <div id="payout-cards"></div>
   </div>
 </div>
 
@@ -199,6 +215,7 @@ async function loadData(){
     }
     renderStats();
     renderCards();
+    renderPayout();
   } catch(e){
     document.getElementById('cards-container').innerHTML = `<div class="loading">errore caricamento dati: ${e.message}</div>`;
   }
@@ -244,6 +261,7 @@ async function approve(id){
   showToast('✓ Approvato — $2.50 aggiunto','green');
   renderStats();
   renderCards();
+  renderPayout();
 }
 
 async function reject(id){
@@ -257,6 +275,7 @@ async function reject(id){
   showToast('✗ Rifiutato','red');
   renderStats();
   renderCards();
+  renderPayout();
 }
 
 function setFilter(f, btn){
@@ -337,6 +356,90 @@ function renderCards(){
 
 loadData();
 setInterval(loadData, 30000);
+
+// Payout state (persisted in localStorage)
+let paidState = {};
+try { paidState = JSON.parse(localStorage.getItem('paidState')||'{}'); } catch(e){}
+
+async function loadReaders(){
+  try{
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/Foglio1?key=${API_KEY}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if(!json.values || json.values.length < 2) return {};
+    const headers = json.values[0];
+    const readers = {};
+    json.values.slice(1).forEach(row=>{
+      const obj = {};
+      headers.forEach((h,j)=>obj[h]=row[j]||'');
+      if(obj.MESSENGER_ID) readers[obj.MESSENGER_ID] = obj;
+    });
+    return readers;
+  } catch(e){ return {}; }
+}
+
+async function renderPayout(){
+  const approved = allData.filter(d=>d.SCREENSHOT_STATUS==='APPROVED');
+  if(approved.length===0){
+    document.getElementById('payout-section').style.display='none';
+    return;
+  }
+  document.getElementById('payout-section').style.display='block';
+
+  const readers = await loadReaders();
+
+  // Group by MESSENGER_ID
+  const byReader = {};
+  approved.forEach(item=>{
+    const id = item.MESSENGER_ID;
+    if(!byReader[id]) byReader[id] = {name:item.NAME, messengerId:id, books:[], total:0};
+    byReader[id].books.push(item.BOOK_TITLE||item.BOOK_ID);
+    byReader[id].total += parseFloat(item.AMOUNT_DUE||0);
+  });
+
+  // Attach PayPal from readers sheet
+  Object.keys(byReader).forEach(id=>{
+    const r = readers[id];
+    byReader[id].paypal = r ? (r.PAYPAL_EMAIL||'—') : '—';
+  });
+
+  const container = document.getElementById('payout-cards');
+  container.innerHTML = Object.values(byReader).map(r=>{
+    const isPaid = !!paidState[r.messengerId];
+    return `
+    <div class="payout-card ${isPaid?'paid':''}" id="pc-${r.messengerId}">
+      <div class="avatar">${initials(r.name)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="payout-name">${r.name}</div>
+        <div class="payout-paypal">PayPal: ${r.paypal}</div>
+        <div class="payout-books">${r.books.join(' · ')}</div>
+      </div>
+      <div class="payout-amount ${isPaid?'paid'}">$${r.total.toFixed(2)}</div>
+      <button class="paid-toggle ${isPaid?'checked':''}" onclick="togglePaid('${r.messengerId}', this)">
+        ${isPaid?'✓ pagato':'segna pagato'}
+      </button>
+    </div>`;
+  }).join('');
+}
+
+function togglePaid(messengerId, btn){
+  paidState[messengerId] = !paidState[messengerId];
+  localStorage.setItem('paidState', JSON.stringify(paidState));
+  const card = document.getElementById('pc-'+messengerId);
+  const amountEl = card.querySelector('.payout-amount');
+  if(paidState[messengerId]){
+    card.classList.add('paid');
+    amountEl.classList.add('paid');
+    btn.classList.add('checked');
+    btn.textContent = '✓ pagato';
+  } else {
+    card.classList.remove('paid');
+    amountEl.classList.remove('paid');
+    btn.classList.remove('checked');
+    btn.textContent = 'segna pagato';
+  }
+  localStorage.setItem('paidState', JSON.stringify(paidState));
+}
 </script>
 </body>
 </html>
