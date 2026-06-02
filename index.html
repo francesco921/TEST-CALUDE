@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Review Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f0f;
+  --surface:#161616;
+  --surface2:#1e1e1e;
+  --border:#2a2a2a;
+  --border2:#383838;
+  --text:#f0f0f0;
+  --text2:#888;
+  --text3:#555;
+  --green:#4ade80;
+  --green-bg:rgba(74,222,128,0.08);
+  --green-border:rgba(74,222,128,0.2);
+  --red:#f87171;
+  --red-bg:rgba(248,113,113,0.08);
+  --red-border:rgba(248,113,113,0.2);
+  --amber:#fbbf24;
+  --amber-bg:rgba(251,191,36,0.08);
+  --amber-border:rgba(251,191,36,0.2);
+  --blue:#60a5fa;
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh}
+.top-bar{border-bottom:1px solid var(--border);padding:20px 32px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-family:'Instrument Serif',serif;font-size:22px;letter-spacing:-0.5px}
+.logo span{color:var(--text2)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:8px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.live-label{font-size:12px;color:var(--text2)}
+.main{max-width:900px;margin:0 auto;padding:32px 24px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:32px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px}
+.stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.stat-value{font-size:32px;font-weight:500;line-height:1}
+.stat-value.green{color:var(--green)}
+.stat-value.amber{color:var(--amber)}
+.stat-value.blue{color:var(--blue)}
+.filters{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+.filter-btn{padding:6px 16px;font-size:12px;font-family:'DM Mono',monospace;border:1px solid var(--border);background:transparent;color:var(--text2);border-radius:6px;cursor:pointer;transition:all 0.15s}
+.filter-btn:hover{border-color:var(--border2);color:var(--text)}
+.filter-btn.active{background:var(--surface2);border-color:var(--border2);color:var(--text)}
+.section-title{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;transition:border-color 0.15s}
+.card:hover{border-color:var(--border2)}
+.card.approved{border-left:3px solid var(--green)}
+.card.rejected{border-left:3px solid var(--red)}
+.card-header{padding:20px;display:flex;align-items:flex-start;gap:16px;border-bottom:1px solid var(--border)}
+.avatar{width:44px;height:44px;border-radius:50%;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;flex-shrink:0;color:var(--text)}
+.reader-name{font-size:15px;font-weight:500;margin-bottom:6px}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:11px;padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace}
+.tag-new{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
+.tag-us{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.tag-pending{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
+.tag-approved{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.tag-rejected{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.tag-nonus{background:rgba(96,165,250,0.08);color:var(--blue);border:1px solid rgba(96,165,250,0.2)}
+.card-meta{margin-left:auto;text-align:right;flex-shrink:0}
+.assignment-id{font-size:11px;color:var(--text3);margin-bottom:4px}
+.amount{font-size:18px;font-weight:500;color:var(--green)}
+.card-body{padding:20px}
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.meta-item{font-size:12px;color:var(--text3)}
+.meta-item span{color:var(--text2);display:block;margin-top:2px}
+.screenshot-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:20px;min-height:120px;display:flex;align-items:center;justify-content:center;position:relative}
+.screenshot-box img{max-width:100%;max-height:280px;border-radius:6px;object-fit:contain;cursor:pointer}
+.screenshot-box img:hover{opacity:0.9}
+.no-screenshot{font-size:13px;color:var(--text3);text-align:center}
+.no-screenshot svg{display:block;margin:0 auto 8px;opacity:0.3}
+.actions{display:flex;gap:10px}
+.btn{flex:1;padding:12px;font-family:'DM Mono',monospace;font-size:13px;border-radius:8px;cursor:pointer;transition:all 0.15s;border:1px solid}
+.btn-approve{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
+.btn-approve:hover{background:rgba(74,222,128,0.15)}
+.btn-reject{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
+.btn-reject:hover{background:rgba(248,113,113,0.15)}
+.btn:disabled{opacity:0.4;cursor:not-allowed}
+.total-bar{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;justify-content:space-between;align-items:center;margin-top:24px}
+.total-label{font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:1px}
+.total-amount{font-size:28px;font-weight:500;color:var(--green)}
+.empty{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty-title{font-size:16px;color:var(--text2);margin-bottom:8px}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:14px 20px;font-size:13px;opacity:0;transform:translateY(8px);transition:all 0.2s;pointer-events:none;z-index:100}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.green{border-color:var(--green-border);color:var(--green)}
+.toast.red{border-color:var(--red-border);color:var(--red)}
+.loading{text-align:center;padding:60px;color:var(--text3);font-size:14px}
+.refresh-btn{background:transparent;border:1px solid var(--border);color:var(--text2);padding:8px 16px;font-family:'DM Mono',monospace;font-size:12px;border-radius:6px;cursor:pointer;transition:all 0.15s}
+.refresh-btn:hover{border-color:var(--border2);color:var(--text)}
+.config-banner{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;padding:14px 20px;margin-bottom:24px;font-size:13px;color:var(--amber);display:none}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="logo">Review <span>Dashboard</span></div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <span class="live-label"><span class="status-dot"></span>live</span>
+    <button class="refresh-btn" onclick="loadData()">↻ refresh</button>
+  </div>
+</div>
+
+<div class="main">
+  <div id="config-banner" class="config-banner">
+    ⚠ Configura GOOGLE_API_KEY e SPREADSHEET_ID nel file config.js
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">In attesa</div>
+      <div class="stat-value amber" id="stat-pending">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Approvati</div>
+      <div class="stat-value green" id="stat-approved">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Da pagare</div>
+      <div class="stat-value blue" id="stat-total">—</div>
+    </div>
+  </div>
+
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter('all',this)">tutti</button>
+    <button class="filter-btn" onclick="setFilter('PENDING',this)">in attesa</button>
+    <button class="filter-btn" onclick="setFilter('APPROVED',this)">approvati</button>
+    <button class="filter-btn" onclick="setFilter('REJECTED',this)">rifiutati</button>
+  </div>
+
+  <div id="cards-container"><div class="loading">caricamento dati...</div></div>
+
+  <div class="total-bar" id="total-bar" style="display:none">
+    <div>
+      <div class="total-label">Totale da pagare</div>
+    </div>
+    <div class="total-amount" id="total-amount">$0.00</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script>
+const SPREADSHEET_ID = window.SPREADSHEET_ID || '';
+const API_KEY = window.GOOGLE_API_KEY || '';
+const SHEET_NAME = 'ASSIGNMENTS';
+
+let allData = [];
+let currentFilter = 'all';
+
+function initials(name){
+  return name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+}
+
+function tagClass(tag){
+  if(!tag) return 'tag-nonus';
+  const t = tag.toUpperCase();
+  if(t==='NEW') return 'tag-new';
+  if(t.startsWith('US')) return 'tag-us';
+  if(t==='NON US') return 'tag-nonus';
+  return 'tag-nonus';
+}
+
+function showToast(msg, type='green'){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  setTimeout(()=>t.className='toast',2500);
+}
+
+async function loadData(){
+  if(!API_KEY || !SPREADSHEET_ID){
+    document.getElementById('config-banner').style.display='block';
+    document.getElementById('cards-container').innerHTML = '<div class="loading">configura API key e Spreadsheet ID</div>';
+    return;
+  }
+  document.getElementById('cards-container').innerHTML = '<div class="loading">caricamento...</div>';
+  try{
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}?key=${API_KEY}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if(!json.values || json.values.length < 2){
+      allData = [];
+    } else {
+      const headers = json.values[0];
+      allData = json.values.slice(1).map((row,i)=>{
+        const obj = {};
+        headers.forEach((h,j)=>obj[h]=row[j]||'');
+        obj._rowIndex = i+2;
+        return obj;
+      });
+    }
+    renderStats();
+    renderCards();
+  } catch(e){
+    document.getElementById('cards-container').innerHTML = `<div class="loading">errore caricamento dati: ${e.message}</div>`;
+  }
+}
+
+async function updateRow(rowIndex, status, amount){
+  if(!API_KEY || !SPREADSHEET_ID) return;
+  const today = new Date().toISOString().split('T')[0];
+  const screenshotColIndex = 8;
+  const amountColIndex = 9;
+  const dateColIndex = 10;
+
+  const colLetter = n => String.fromCharCode(65+n);
+  const ranges = [
+    {range:`${SHEET_NAME}!${colLetter(screenshotColIndex)}${rowIndex}`,values:[[status]]},
+    {range:`${SHEET_NAME}!${colLetter(amountColIndex)}${rowIndex}`,values:[[amount.toString()]]},
+    {range:`${SHEET_NAME}!${colLetter(dateColIndex)}${rowIndex}`,values:[[status==='APPROVED'?today:'']]}
+  ];
+
+  try{
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values:batchUpdate?key=${API_KEY}`;
+    await fetch(url,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        valueInputOption:'USER_ENTERED',
+        data: ranges
+      })
+    });
+  } catch(e){
+    console.error('Update error',e);
+  }
+}
+
+async function approve(id){
+  const item = allData.find(d=>d.ASSIGNMENT_ID===id);
+  if(!item) return;
+  const btn = document.querySelector(`[data-approve="${id}"]`);
+  if(btn){btn.disabled=true;btn.textContent='...';}
+  item.SCREENSHOT_STATUS='APPROVED';
+  item.AMOUNT_DUE='2.5';
+  await updateRow(item._rowIndex,'APPROVED',2.5);
+  showToast('✓ Approvato — $2.50 aggiunto','green');
+  renderStats();
+  renderCards();
+}
+
+async function reject(id){
+  const item = allData.find(d=>d.ASSIGNMENT_ID===id);
+  if(!item) return;
+  const btn = document.querySelector(`[data-reject="${id}"]`);
+  if(btn){btn.disabled=true;btn.textContent='...';}
+  item.SCREENSHOT_STATUS='REJECTED';
+  item.AMOUNT_DUE='0';
+  await updateRow(item._rowIndex,'REJECTED',0);
+  showToast('✗ Rifiutato','red');
+  renderStats();
+  renderCards();
+}
+
+function setFilter(f, btn){
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCards();
+}
+
+function renderStats(){
+  const pending = allData.filter(d=>d.SCREENSHOT_STATUS==='PENDING'||!d.SCREENSHOT_STATUS).length;
+  const approved = allData.filter(d=>d.SCREENSHOT_STATUS==='APPROVED').length;
+  const total = allData.filter(d=>d.SCREENSHOT_STATUS==='APPROVED').reduce((s,d)=>s+(parseFloat(d.AMOUNT_DUE)||0),0);
+  document.getElementById('stat-pending').textContent = pending;
+  document.getElementById('stat-approved').textContent = approved;
+  document.getElementById('stat-total').textContent = '$'+total.toFixed(2);
+  document.getElementById('total-amount').textContent = '$'+total.toFixed(2);
+  document.getElementById('total-bar').style.display = approved>0?'flex':'none';
+}
+
+function renderCards(){
+  const filtered = currentFilter==='all' ? allData :
+    currentFilter==='PENDING' ? allData.filter(d=>!d.SCREENSHOT_STATUS||d.SCREENSHOT_STATUS==='PENDING') :
+    allData.filter(d=>d.SCREENSHOT_STATUS===currentFilter);
+
+  const container = document.getElementById('cards-container');
+
+  if(filtered.length===0){
+    container.innerHTML = `<div class="empty"><div class="empty-title">nessun elemento</div><div>nessuno screenshot in questa categoria</div></div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(item=>{
+    const status = item.SCREENSHOT_STATUS||'PENDING';
+    const cardClass = status==='APPROVED'?'approved':status==='REJECTED'?'rejected':'';
+    const isPending = status==='PENDING'||!item.SCREENSHOT_STATUS;
+    const listTag = item.LIST_TAG||'NEW';
+
+    const screenshotHtml = item.SCREENSHOT_LINK
+      ? `<img src="${item.SCREENSHOT_LINK}" alt="Screenshot" onclick="window.open(this.src,'_blank')" onerror="this.parentElement.innerHTML='<div class=no-screenshot><svg width=32 height=32 viewBox=\\'0 0 24 24\\' fill=none stroke=\\'currentColor\\' stroke-width=\\'1.5\\'><path d=\\'M3 3l18 18M10.5 10.5A3 3 0 0013.5 13.5M6.5 6.5A8 8 0 0117.5 17.5\\'/></svg>link scaduto — screenshot da Drive</div>'">`
+      : `<div class="no-screenshot"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>screenshot non ancora ricevuto</div>`;
+
+    return `
+    <div class="card ${cardClass}">
+      <div class="card-header">
+        <div class="avatar">${initials(item.NAME||'??')}</div>
+        <div style="flex:1;min-width:0">
+          <div class="reader-name">${item.NAME||'—'}</div>
+          <div class="tags">
+            <span class="tag ${tagClass(listTag)}">${listTag}</span>
+            ${status==='APPROVED'?'<span class="tag tag-approved">✓ approvato</span>':
+              status==='REJECTED'?'<span class="tag tag-rejected">✗ rifiutato</span>':
+              '<span class="tag tag-pending">⏳ in attesa</span>'}
+          </div>
+        </div>
+        <div class="card-meta">
+          <div class="assignment-id">${item.ASSIGNMENT_ID||'—'}</div>
+          <div class="amount">$${parseFloat(item.AMOUNT_DUE||0).toFixed(2)}</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="meta-grid">
+          <div class="meta-item">libro<span>${item.BOOK_TITLE||'—'}</span></div>
+          <div class="meta-item">codice<span>${item.BOOK_ID||'—'}</span></div>
+          <div class="meta-item">inviato il<span>${item.DATE_SENT||'—'}</span></div>
+          <div class="meta-item">messenger ID<span style="font-size:10px;word-break:break-all">${item.MESSENGER_ID||'—'}</span></div>
+        </div>
+        <div class="screenshot-box">${screenshotHtml}</div>
+        ${isPending?`
+        <div class="actions">
+          <button class="btn btn-approve" data-approve="${item.ASSIGNMENT_ID}" onclick="approve('${item.ASSIGNMENT_ID}')">✓ approva</button>
+          <button class="btn btn-reject" data-reject="${item.ASSIGNMENT_ID}" onclick="reject('${item.ASSIGNMENT_ID}')">✗ rifiuta</button>
+        </div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+loadData();
+setInterval(loadData, 30000);
+</script>
+</body>
+</html>
