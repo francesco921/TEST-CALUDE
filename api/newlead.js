@@ -58,6 +58,7 @@ export default async function handler(req, res) {
     const {
       name,
       email,
+      is_us_resident,  // "Yes" or "No"
       has_paypal,      // "Yes" or "No"
       paypal_email,
       has_amazon,      // "Yes" or "No"
@@ -69,6 +70,7 @@ export default async function handler(req, res) {
     }
 
     const isEligible = 
+      is_us_resident?.toLowerCase() === 'yes' &&
       has_paypal?.toLowerCase() === 'yes' &&
       has_amazon?.toLowerCase() === 'yes' &&
       amazon_fifty?.toLowerCase() === 'yes';
@@ -91,6 +93,7 @@ export default async function handler(req, res) {
           name,
           email,
           isEligible ? (paypal_email || '') : '',
+          is_us_resident?.toLowerCase() === 'yes' ? 'YES' : 'NO',
           has_amazon?.toLowerCase() === 'yes' ? 'YES' : 'NO',
           amazon_fifty?.toLowerCase() === 'yes' ? 'YES' : 'NO',
           eligible,
