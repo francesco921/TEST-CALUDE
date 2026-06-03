@@ -58,22 +58,28 @@ export default async function handler(req, res) {
     const {
       name,
       email,
-      is_us_resident,  // "Yes" or "No"
-      has_paypal,      // "Yes" or "No"
-      paypal_email,
-      has_amazon,      // "Yes" or "No"
-      amazon_fifty     // "Yes" or "No"
+      is_us_resident, isusresident,
+      has_paypal, haspaypal,
+      paypal_email, paypalemail,
+      has_amazon, hasamazon,
+      amazon_fifty, amazonfifty
     } = req.body;
 
     if (!name || !email) {
       return res.status(400).json({ error: 'name and email are required' });
     }
 
+    const usResident = is_us_resident || isusresident;
+    const paypal = has_paypal || haspaypal;
+    const paypalMail = paypal_email || paypalemail;
+    const amazon = has_amazon || hasamazon;
+    const amazonFifty = amazon_fifty || amazonfifty;
+
     const isEligible = 
-      is_us_resident?.toLowerCase() === 'yes' &&
-      has_paypal?.toLowerCase() === 'yes' &&
-      has_amazon?.toLowerCase() === 'yes' &&
-      amazon_fifty?.toLowerCase() === 'yes';
+      usResident?.toLowerCase() === 'yes' &&
+      paypal?.toLowerCase() === 'yes' &&
+      amazon?.toLowerCase() === 'yes' &&
+      amazonFifty?.toLowerCase() === 'yes';
 
     const eligible = isEligible ? 'ELIGIBLE' : 'NON ELIGIBLE';
     const readerCode = generateReaderCode();
@@ -92,10 +98,10 @@ export default async function handler(req, res) {
         values: [[
           name,
           email,
-          isEligible ? (paypal_email || '') : '',
-          is_us_resident?.toLowerCase() === 'yes' ? 'YES' : 'NO',
-          has_amazon?.toLowerCase() === 'yes' ? 'YES' : 'NO',
-          amazon_fifty?.toLowerCase() === 'yes' ? 'YES' : 'NO',
+          isEligible ? (paypalMail || '') : '',
+          usResident?.toLowerCase() === 'yes' ? 'YES' : 'NO',
+          amazon?.toLowerCase() === 'yes' ? 'YES' : 'NO',
+          amazonFifty?.toLowerCase() === 'yes' ? 'YES' : 'NO',
           eligible,
           isEligible ? readerCode : '',
           '',  // LIST_TAG - to be assigned manually
@@ -113,7 +119,7 @@ export default async function handler(req, res) {
     
     if (groupId && MAILERLITE_API_KEY) {
       await addToMailerLite(name, email, isEligible ? readerCode : '', groupId, {
-        paypal_email: isEligible ? (paypal_email || '') : '',
+        paypal_email: isEligible ? (paypalMail || '') : '',
         eligible: eligible
       });
     }
